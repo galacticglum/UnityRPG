@@ -18,6 +18,14 @@ public class AttributeContainer : IEnumerable<Attribute>
         }
     }
 
+    public void Update()
+    {
+        foreach (Attribute attribute in attributes)
+        {
+            attribute.Update();
+        }
+    }
+
     public bool Contains(Attribute attribute)
     {
         return attributes.Contains(attribute);

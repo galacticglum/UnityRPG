@@ -22,14 +22,15 @@ public class Player : MonoBehaviour
 
     private void Update()
     {
+        attributes.Update();
         if (Input.GetKeyDown(KeyCode.KeypadPlus))
         {
-            Attributes.Get("Health").Modify(25);
+            Attributes.Get("Health").Modify(Random.Range(1, 3000));
         }
 
         if (Input.GetKeyDown(KeyCode.KeypadMinus))
         {
-            Attributes.Get("Health").Modify(-25);
+            Attributes.Get("Health").Modify(-Random.Range(1, 3000));
         }
     }
 }

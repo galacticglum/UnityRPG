@@ -34,6 +34,10 @@ public class Attribute : ScriptableObject
     private int maximumValue;
     [SerializeField]
     private bool defaultToMaximumValue = true;
+    [SerializeField]
+    [Range(0, 1)]
+    private float regenerationPercentage;
+    private float regenerationTimer;
 
     public void Initialize()
     {
@@ -41,10 +45,26 @@ public class Attribute : ScriptableObject
         Value = maximumValue;
     }
 
+    public void Update()
+    {
+        regenerationTimer += Time.deltaTime;
+        if (regenerationTimer >= 1)
+        {
+            Regenerate();
+            regenerationTimer = 0;
+        }
+    }
+
     public void Modify(int byValue)
     {
         Value += byValue;
         Value = Mathf.Clamp(Value, minimumValue, maximumValue);
         OnValueChanged();
+    }
+
+    private void Regenerate()
+    {
+        if (regenerationPercentage <= 0) return;
+        Modify((int)(MaximumValue * regenerationPercentage));
     }
 }
