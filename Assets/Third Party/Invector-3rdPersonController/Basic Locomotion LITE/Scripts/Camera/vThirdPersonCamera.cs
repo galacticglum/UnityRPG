@@ -12,7 +12,7 @@ public class vThirdPersonCamera : MonoBehaviour
         {
             if (_instance == null)
             {
-                _instance = GameObject.FindObjectOfType<vThirdPersonCamera>();
+                _instance = FindObjectOfType<vThirdPersonCamera>();
 
                 //Tell unity not to destroy this object when loading a new scene!
                 //DontDestroyOnLoad(_instance.gameObject);
@@ -32,14 +32,21 @@ public class vThirdPersonCamera : MonoBehaviour
     [Tooltip("Debug purposes, lock the camera behind the character for better align the states")]
     public bool lockCamera;
     
-    public float rightOffset = 0f;
+    public float rightOffset;
     public float defaultDistance = 2.5f;
     public float height = 1.4f;
+    [SerializeField]
+    private float zoomSensitivity = 20;
+    [SerializeField]
+    private float minimumZoom = 0.6f;
+    [SerializeField]
+    private float maximumZoom = 6;
+
     public float smoothFollow = 10f;
     public float xMouseSensitivity = 3f;
     public float yMouseSensitivity = 3f;
     public float yMinLimit = -40f;
-    public float yMaxLimit = 80f; 
+    public float yMaxLimit = 80f;
     #endregion
 
     #region hide properties    
@@ -73,6 +80,7 @@ public class vThirdPersonCamera : MonoBehaviour
     private float xMaxLimit = 360f;
     private float cullingHeight = 0.2f;
     private float cullingMinDist = 0.1f;
+    private float zoomTarget;
 
     #endregion
 
@@ -100,6 +108,7 @@ public class vThirdPersonCamera : MonoBehaviour
 
         distance = defaultDistance;
         currentHeight = height;
+        zoomTarget = defaultDistance;
     }
 
     void FixedUpdate()
@@ -125,6 +134,7 @@ public class vThirdPersonCamera : MonoBehaviour
         currentTarget = newTarget;
         mouseY = currentTarget.rotation.eulerAngles.x;
         mouseX = currentTarget.rotation.eulerAngles.y;
+
         Init();
     }
 
@@ -135,7 +145,7 @@ public class vThirdPersonCamera : MonoBehaviour
     /// <returns></returns>
     public Ray ScreenPointToRay(Vector3 Point)
     {
-        return this.GetComponent<Camera>().ScreenPointToRay(Point);
+        return GetComponent<Camera>().ScreenPointToRay(Point);
     }
 
     /// <summary>
@@ -171,8 +181,12 @@ public class vThirdPersonCamera : MonoBehaviour
         if (currentTarget == null)
             return;
 
-        distance = Mathf.Lerp(distance, defaultDistance, smoothFollow * Time.deltaTime);
-        //_camera.fieldOfView = fov;
+        if (distance != zoomTarget)
+        {
+            float newDistance = Mathf.Lerp(distance, zoomTarget, smoothFollow * Time.deltaTime);
+            distance = Mathf.Clamp(newDistance, minimumZoom, maximumZoom);
+        }
+
         cullingDistance = Mathf.Lerp(cullingDistance, distance, Time.deltaTime);
         var camDir = (forward * targetLookAt.forward) + (rightOffset * targetLookAt.right);
 
@@ -222,13 +236,15 @@ public class vThirdPersonCamera : MonoBehaviour
         Quaternion newRot = Quaternion.Euler(mouseY, mouseX, 0);
         targetLookAt.rotation = Quaternion.Slerp(targetLookAt.rotation, newRot, smoothCameraRotation * Time.deltaTime);
         transform.position = current_cPos + (camDir * (distance));
-        var rotation = Quaternion.LookRotation((lookPoint) - transform.position);
+        var rotation = Quaternion.LookRotation(lookPoint - transform.position);
 
-        //lookTargetOffSet = Vector3.Lerp(lookTargetOffSet, Vector3.zero, 1 * Time.fixedDeltaTime);
-
-        //rotation.eulerAngles += rotationOffSet + lookTargetOffSet;
         transform.rotation = rotation;
         movementSpeed = Vector2.zero;
+
+        float zoomAxis = Input.GetAxis("Mouse ScrollWheel");
+        if (zoomAxis == 0) return;
+        zoomTarget = distance - zoomSensitivity * (distance * zoomAxis);
+        Debug.Log(zoomTarget);
     }
 
 
